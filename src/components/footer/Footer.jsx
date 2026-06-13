@@ -1,368 +1,134 @@
+import "./Footer.css";
+
+const QUICK_LINKS = [
+  "Home", "About", "Eligibility",
+  "How to Apply", "Results", "FAQ", "Contact",
+];
+
+const PROGRAM_LINKS = [
+  "Scholarship Details", "Selection Criteria", "Merit Screening",
+  "Award Disbursement", "Scholar Testimonials", "Past Scholars", "Annual Report",
+];
+
+const CONTACT_INFO = [
+  { icon: "🌐", text: "www.aderf.co.in",               href: "https://www.aderf.co.in" },
+  { icon: "✉️", text: "support.utkarsh@aderf.co.in",   href: "mailto:support.utkarsh@aderf.co.in" },
+  { icon: "📞", text: "+91 6205381935 / 9430269924",    href: "tel:+916205381935" },
+];
+
+const SOCIAL = [
+  { icon: "𝕏",  href: "#" },
+  { icon: "in", href: "#" },
+  { icon: "f",  href: "#" },
+  { icon: "▶",  href: "#" },
+];
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    <footer className="footer">
 
-        .footer {
-          font-family: 'Inter', sans-serif;
-          background: #0f0f1e;
-          color: #fff;
-        }
+      {/* ── MAIN GRID ─────────────────────────────────── */}
+      <div className="footer-main">
 
-        .footer-main {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 60px 24px 48px;
-          display: grid;
-          grid-template-columns: 2fr 1fr 1fr 1.5fr;
-          gap: 48px;
-        }
-
-        /* Brand column */
-        .footer-brand-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 16px;
-        }
-
-        .footer-logo-icon {
-          width: 40px; height: 40px;
-          background: #f5a623;
-          border-radius: 8px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 20px;
-          font-weight: 900;
-          color: #1a1a2e;
-        }
-
-        .footer-logo-text .hi {
-          font-size: 20px;
-          font-weight: 900;
-          color: #f5a623;
-          line-height: 1;
-        }
-
-        .footer-logo-text .en {
-          font-size: 10px;
-          color: #8890a0;
-          letter-spacing: 0.5px;
-        }
-
-        .footer-tagline {
-          font-size: 13px;
-          color: #8890a0;
-          line-height: 1.65;
-          max-width: 260px;
-          margin-bottom: 24px;
-        }
-
-        .footer-contact-list {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .footer-contact-item {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 12px;
-          color: #aab0c0;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .footer-contact-item:hover { color: #f5a623; }
-
-        .footer-contact-icon {
-          width: 28px; height: 28px;
-          background: rgba(245,166,35,0.1);
-          border-radius: 6px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 12px;
-          flex-shrink: 0;
-        }
-
-        /* Nav columns */
-        .footer-col-title {
-          font-size: 12px;
-          font-weight: 700;
-          color: #f5a623;
-          letter-spacing: 1.5px;
-          text-transform: uppercase;
-          margin-bottom: 16px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid rgba(245,166,35,0.2);
-        }
-
-        .footer-nav-list {
-          list-style: none;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-
-        .footer-nav-list a {
-          text-decoration: none;
-          font-size: 13px;
-          color: #8890a0;
-          transition: color 0.2s, padding-left 0.2s;
-          display: block;
-        }
-
-        .footer-nav-list a:hover {
-          color: #f5a623;
-          padding-left: 4px;
-        }
-
-        /* Newsletter */
-        .footer-newsletter p {
-          font-size: 13px;
-          color: #8890a0;
-          line-height: 1.6;
-          margin-bottom: 16px;
-        }
-
-        .footer-input-row {
-          display: flex;
-          gap: 8px;
-        }
-
-        .footer-input {
-          flex: 1;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 6px;
-          padding: 10px 14px;
-          color: #fff;
-          font-size: 13px;
-          font-family: 'Inter', sans-serif;
-          outline: none;
-          transition: border-color 0.2s;
-          min-width: 0;
-        }
-
-        .footer-input:focus {
-          border-color: #f5a623;
-        }
-
-        .footer-input::placeholder { color: #555; }
-
-        .footer-input-btn {
-          background: #f5a623;
-          color: #1a1a2e;
-          border: none;
-          padding: 10px 16px;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background 0.2s;
-          font-family: 'Inter', sans-serif;
-          white-space: nowrap;
-        }
-
-        .footer-input-btn:hover { background: #e09510; }
-
-        .footer-social-row {
-          display: flex;
-          gap: 10px;
-          margin-top: 20px;
-        }
-
-        .footer-social-btn {
-          width: 34px; height: 34px;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 6px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 14px;
-          cursor: pointer;
-          transition: background 0.2s, border-color 0.2s;
-          text-decoration: none;
-          color: #aab0c0;
-        }
-
-        .footer-social-btn:hover {
-          background: rgba(245,166,35,0.15);
-          border-color: rgba(245,166,35,0.4);
-          color: #f5a623;
-        }
-
-        /* Bottom bar */
-        .footer-bottom {
-          border-top: 1px solid rgba(255,255,255,0.07);
-        }
-
-        .footer-bottom-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 18px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .footer-copy {
-          font-size: 11px;
-          color: #555;
-          line-height: 1.6;
-        }
-
-        .footer-copy a {
-          color: #8890a0;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .footer-copy a:hover { color: #f5a623; }
-
-        .footer-links-row {
-          display: flex;
-          gap: 20px;
-          list-style: none;
-        }
-
-        .footer-links-row a {
-          font-size: 11px;
-          color: #555;
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-
-        .footer-links-row a:hover { color: #f5a623; }
-
-        @media (max-width: 900px) {
-          .footer-main {
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-          }
-          .footer-brand-col {
-            grid-column: 1 / -1;
-          }
-        }
-
-        @media (max-width: 580px) {
-          .footer-main {
-            grid-template-columns: 1fr;
-          }
-          .footer-bottom-inner {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-          }
-        }
-      `}</style>
-
-      <footer className="footer">
-        <div className="footer-main">
-
-          {/* Brand */}
-          <div className="footer-brand-col">
-            <div className="footer-brand-logo">
-              <div className="footer-logo-icon">उ</div>
-              <div className="footer-logo-text">
-                <div className="hi">उत्कर्ष</div>
-                <div className="en">ADERF Scholarship Program</div>
-              </div>
+        {/* Brand */}
+        <div className="footer-brand-col">
+          <div className="footer-brand-logo">
+            <div className="footer-logo-icon">उ</div>
+            <div>
+              <span className="footer-logo-hi">उत्कर्ष</span>
+              <span className="footer-logo-en">ADERF Scholarship Program</span>
             </div>
-            <p className="footer-tagline">
-              Empowering Young Minds. Inspiring Bright Futures.<br />
-              A flagship scholarship initiative by the Asian Dev. Educational &amp; Research Foundation —
-              Patna, Bihar, India.
-            </p>
-            <div className="footer-contact-list">
-              <a href="https://www.aderf.co.in" className="footer-contact-item" target="_blank" rel="noreferrer">
-                <span className="footer-contact-icon">🌐</span>
-                www.aderf.co.in
+          </div>
+
+          <p className="footer-tagline">
+            Empowering Young Minds. Inspiring Bright Futures.<br />
+            A flagship scholarship initiative by the Asian Dev.
+            Educational &amp; Research Foundation — Patna, Bihar, India.
+          </p>
+
+          <div className="footer-contact-list">
+            {CONTACT_INFO.map((c) => (
+              <a
+                key={c.text}
+                href={c.href}
+                className="footer-contact-item"
+                target={c.href.startsWith("http") ? "_blank" : undefined}
+                rel={c.href.startsWith("http") ? "noreferrer" : undefined}
+              >
+                <span className="footer-contact-icon">{c.icon}</span>
+                {c.text}
               </a>
-              <a href="mailto:support.utkarsh@aderf.co.in" className="footer-contact-item">
-                <span className="footer-contact-icon">✉️</span>
-                support.utkarsh@aderf.co.in
-              </a>
-              <a href="tel:+916205381935" className="footer-contact-item">
-                <span className="footer-contact-icon">📞</span>
-                +91 6205381935 / 9430269924
-              </a>
-            </div>
+            ))}
           </div>
-
-          {/* Quick Links */}
-          <div>
-            <div className="footer-col-title">Quick Links</div>
-            <ul className="footer-nav-list">
-              {["Home", "About", "Eligibility", "How to Apply", "Results", "FAQ", "Contact"].map(l => (
-                <li key={l}>
-                  <a href={`#${l.toLowerCase().replace(/\s+/g, "-")}`}>{l}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Program Info */}
-          <div>
-            <div className="footer-col-title">Program Info</div>
-            <ul className="footer-nav-list">
-              {[
-                "Scholarship Details",
-                "Selection Criteria",
-                "Merit Screening",
-                "Award Disbursement",
-                "Scholar Testimonials",
-                "Past Scholars",
-                "Annual Report",
-              ].map(l => (
-                <li key={l}><a href="#">{l}</a></li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div className="footer-newsletter">
-            <div className="footer-col-title">Stay Updated</div>
-            <p>
-              Get notified when the next scholarship cycle opens.
-              We send one email per year — no spam.
-            </p>
-            <div className="footer-input-row">
-              <input
-                className="footer-input"
-                type="email"
-                placeholder="your@email.com"
-              />
-              <button className="footer-input-btn">Notify</button>
-            </div>
-            <div className="footer-social-row">
-              {["𝕏", "in", "f", "▶"].map((icon, i) => (
-                <a key={i} href="#" className="footer-social-btn">{icon}</a>
-              ))}
-            </div>
-          </div>
-
         </div>
 
-        {/* Bottom bar */}
-        <div className="footer-bottom">
-          <div className="footer-bottom-inner">
-            <p className="footer-copy">
-              © {currentYear} Asian Development Educational &amp; Research Foundation (ADERF) · Patna, Bihar, India · All rights reserved<br />
-              ADERF — Empowering Young Minds. Inspiring Bright Futures. |{" "}
-              <a href="#">Privacy Policy</a> · <a href="#">Terms of Use</a>
-            </p>
-            <ul className="footer-links-row">
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Use</a></li>
-              <li><a href="#">Disclaimer</a></li>
-            </ul>
+        {/* Quick Links */}
+        <div>
+          <div className="footer-col-title">Quick Links</div>
+          <ul className="footer-nav-list">
+            {QUICK_LINKS.map((l) => (
+              <li key={l}>
+                <a href={`#${l.toLowerCase().replace(/\s+/g, "-")}`}>{l}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Program Info */}
+        <div>
+          <div className="footer-col-title">Program Info</div>
+          <ul className="footer-nav-list">
+            {PROGRAM_LINKS.map((l) => (
+              <li key={l}><a href="#">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Newsletter */}
+        <div className="footer-newsletter">
+          <div className="footer-col-title">Stay Updated</div>
+          <p>
+            Get notified when the next scholarship cycle opens.
+            One email per year — no spam.
+          </p>
+          <div className="footer-input-row">
+            <input
+              className="footer-input"
+              type="email"
+              placeholder="your@email.com"
+            />
+            <button className="footer-input-btn">Notify</button>
+          </div>
+          <div className="footer-social-row">
+            {SOCIAL.map((s, i) => (
+              <a key={i} href={s.href} className="footer-social-btn">
+                {s.icon}
+              </a>
+            ))}
           </div>
         </div>
-      </footer>
-    </>
+
+      </div>
+
+      {/* ── BOTTOM BAR ────────────────────────────────── */}
+      <div className="footer-bottom">
+        <div className="footer-bottom-inner">
+          <p className="footer-copy">
+            © {currentYear} Asian Development Educational &amp; Research Foundation (ADERF)
+            · Patna, Bihar, India · All rights reserved<br />
+            ADERF — Empowering Young Minds. Inspiring Bright Futures. ·{" "}
+            <a href="#">Privacy Policy</a> · <a href="#">Terms of Use</a>
+          </p>
+          <ul className="footer-legal-links">
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Use</a></li>
+            <li><a href="#">Disclaimer</a></li>
+          </ul>
+        </div>
+      </div>
+
+    </footer>
   );
 }
