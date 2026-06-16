@@ -1,52 +1,61 @@
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./Navbar.css";
 
 const NAV_LINKS = [
-  "Home",
-  "About",
-  "Eligibility",
-  "How to Apply",
-  "Results",
-  "FAQ",
-  "Contact",
+  { label: "Home",         to: "/"             },
+  { label: "About",        to: "/#about"       },
+  { label: "Eligibility",  to: "/#eligibility" },
+  { label: "How to Apply", to: "/how-to-apply" },
+  { label: "Results",      to: "/#results"     },
+  { label: "FAQ",          to: "/#faq"         },
+  { label: "Contact",      to: "/#contact"     },
 ];
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  const isActive = (to) => {
+    if (to === "/") return pathname === "/";
+    return pathname.startsWith(to.split("#")[0]) && to.split("#")[0] !== "/";
+  };
 
   return (
     <>
+      {/* Announcement bar */}
       <div className="nav-topbar">
         ADERF Annual Scholarship 2026 — Applications Now Open · 15 June Deadline
       </div>
 
       <nav className="nav-root">
         <div className="nav-inner">
+
           {/* Logo */}
-          <a href="#" className="nav-logo">
+          <Link to="/" className="nav-logo">
             <div className="nav-logo-icon">उ</div>
             <div>
               <span className="nav-logo-hi">उत्कर्ष</span>
               <span className="nav-logo-en">ADERF SCHOLARSHIP</span>
             </div>
-          </a>
+          </Link>
 
           {/* Desktop links */}
           <ul className="nav-links">
             {NAV_LINKS.map((link) => (
-              <li key={link}>
-                <a
-                  href={`#${link.toLowerCase().replace(/\s+/g, "-")}`}
-                  className={link === "Home" ? "active" : ""}
+              <li key={link.label}>
+                <Link
+                  to={link.to}
+                  className={isActive(link.to) ? "active" : ""}
                 >
-                  {link}
-                </a>
+                  {link.label}
+                </Link>
               </li>
             ))}
             <li>
-              <a href="#apply" className="nav-cta">
+              <Link to="/how-to-apply" className="nav-cta">
                 Apply Now ↗
-              </a>
+              </Link>
             </li>
           </ul>
 
@@ -65,21 +74,21 @@ export default function Navbar() {
         {/* Mobile menu */}
         <div className={`nav-mobile ${menuOpen ? "open" : ""}`}>
           {NAV_LINKS.map((link) => (
-            <a
-              key={link}
-              href={`#${link.toLowerCase().replace(/\s+/g, "-")}`}
+            <Link
+              key={link.label}
+              to={link.to}
               onClick={() => setMenuOpen(false)}
             >
-              {link}
-            </a>
+              {link.label}
+            </Link>
           ))}
-          <a
-            href="#apply"
+          <Link
+            to="/how-to-apply"
             className="nav-mob-cta"
             onClick={() => setMenuOpen(false)}
           >
             Apply Now ↗
-          </a>
+          </Link>
         </div>
       </nav>
     </>
