@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./Home.css";
 
 const FEATURES = [
@@ -73,7 +74,7 @@ export default function HomePage() {
               and supporting deserving young minds with ₹5,000 financial assistance.
             </p>
             <div className="hero-btns">
-              <a href="#apply" className="btn-primary">Apply Now ↗</a>
+              <Link to="/apply" className="btn-primary">Apply Now</Link>
               <a href="#about" className="btn-outline">Learn More</a>
             </div>
           </div>
@@ -224,7 +225,7 @@ export default function HomePage() {
               application is reviewed. Only 11 scholarship seats are available.
             </p>
             <div className="cta-btns">
-              <a href="#" className="btn-white">Start Application ↗</a>
+              <Link to="/apply" className="btn-white">Start Application</Link>
               <a href="#eligibility" className="btn-ghost">Check Requirements</a>
             </div>
           </div>
