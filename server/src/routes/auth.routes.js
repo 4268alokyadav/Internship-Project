@@ -16,10 +16,31 @@ const registerSchema = z.object({
   password: z.string().min(8),
 });
 
+const sendOtpOrFail = async (user, purpose) => {
+  const code = await createOtp(user.id, purpose);
+  try {
+    await sendOtpEmail({ to: user.email, name: user.name, code, purpose });
+  } catch (error) {
+    console.error(`[MAIL ERROR] ${purpose} OTP for ${user.email}: ${error.code || ""} ${error.message}`);
+    throw new ApiError(
+      502,
+      "OTP email could not be sent. Check MAIL_HOST, MAIL_USER, and MAIL_PASS in .env, then try again.",
+    );
+  }
+};
+
 router.post("/register", asyncHandler(async (req, res) => {
   const data = registerSchema.parse(req.body);
   const existing = await prisma.user.findUnique({ where: { email: data.email.toLowerCase() } });
-  if (existing) throw new ApiError(409, "Email already registered");
+  if (existing?.isEmailVerified) throw new ApiError(409, "Email already registered");
+  if (existing && !existing.isEmailVerified) {
+    await sendOtpOrFail(existing, "EMAIL_VERIFY");
+    res.json({
+      user: publicUser(existing),
+      message: "Account already exists but is not verified. A fresh OTP has been sent.",
+    });
+    return;
+  }
 
   const passwordHash = await bcrypt.hash(data.password, 12);
   const user = await prisma.user.create({
@@ -31,8 +52,7 @@ router.post("/register", asyncHandler(async (req, res) => {
       profile: { create: { currentClass: "X" } },
     },
   });
-  const code = await createOtp(user.id, "EMAIL_VERIFY");
-  await sendOtpEmail({ to: user.email, name: user.name, code, purpose: "EMAIL_VERIFY" });
+  await sendOtpOrFail(user, "EMAIL_VERIFY");
   res.status(201).json({ user: publicUser(user), message: "Registration successful. OTP sent to email." });
 }));
 
@@ -54,6 +74,15 @@ router.post("/verify-email", asyncHandler(async (req, res) => {
   res.json({ token: signToken(updated), user: publicUser(updated) });
 }));
 
+router.post("/resend-verification", asyncHandler(async (req, res) => {
+  const { email } = z.object({ email: z.email() }).parse(req.body);
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (user && !user.isEmailVerified) {
+    await sendOtpOrFail(user, "EMAIL_VERIFY");
+  }
+  res.json({ message: "If the email exists and is not verified, a new OTP has been sent." });
+}));
+
 router.post("/login", asyncHandler(async (req, res) => {
   const { email, password } = z.object({ email: z.email(), password: z.string().min(1) }).parse(req.body);
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
@@ -67,8 +96,7 @@ router.post("/forgot-password", asyncHandler(async (req, res) => {
   const { email } = z.object({ email: z.email() }).parse(req.body);
   const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   if (user) {
-    const code = await createOtp(user.id, "RESET_PASSWORD");
-    await sendOtpEmail({ to: user.email, name: user.name, code, purpose: "RESET_PASSWORD" });
+    await sendOtpOrFail(user, "RESET_PASSWORD");
   }
   res.json({ message: "If the email exists, a reset OTP has been sent." });
 }));

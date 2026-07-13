@@ -3,12 +3,15 @@ import nodemailer from "nodemailer";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 
-const transporter = env.MAIL_USER
+const transporter = env.MAIL_HOST && env.MAIL_USER && env.MAIL_PASS
   ? nodemailer.createTransport({
       host: env.MAIL_HOST,
       port: env.MAIL_PORT,
       secure: env.MAIL_SECURE,
       auth: { user: env.MAIL_USER, pass: env.MAIL_PASS },
+      connectionTimeout: 15000,
+      greetingTimeout: 10000,
+      socketTimeout: 20000,
     })
   : null;
 
@@ -29,9 +32,19 @@ export const createOtp = async (userId, purpose) => {
 export const sendOtpEmail = async ({ to, name, code, purpose }) => {
   const subject = purpose === "RESET_PASSWORD" ? "Reset your Utkarsh password" : "Verify your Utkarsh email";
   const text = `Dear ${name}, your Utkarsh OTP is ${code}. It is valid for 10 minutes.`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1a1a2e">
+      <h2 style="margin:0 0 12px;color:#1a1a2e">Utkarsh Scholarship OTP</h2>
+      <p>Dear ${name},</p>
+      <p>Your OTP is:</p>
+      <p style="font-size:28px;font-weight:700;letter-spacing:4px;color:#d98c0d">${code}</p>
+      <p>This OTP is valid for 10 minutes.</p>
+      <p>Asian Development Educational & Research Foundation</p>
+    </div>
+  `;
 
   if (!transporter) {
-    console.log(`[DEV OTP] ${to}: ${code}`);
+    console.log(`[DEV OTP] ${to}: ${code}. Configure MAIL_USER and MAIL_PASS to send email.`);
     return;
   }
 
@@ -40,5 +53,6 @@ export const sendOtpEmail = async ({ to, name, code, purpose }) => {
     to,
     subject,
     text,
+    html,
   });
 };

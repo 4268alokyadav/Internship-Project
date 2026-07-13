@@ -13,19 +13,26 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [selected, setSelected] = useState([]);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const { register, handleSubmit, reset } = useForm();
 
   const load = async (filters = { search, status }) => {
-    const [dash, apps, contactRes, faqRes] = await Promise.all([
-      api.get("/admin/dashboard"),
-      api.get("/admin/applications", { params: filters }),
-      api.get("/admin/contacts"),
-      api.get("/admin/faqs"),
-    ]);
-    setStats(dash.data.stats);
-    setApplications(apps.data.applications);
-    setContacts(contactRes.data.contacts);
-    setFaqs(faqRes.data.faqs);
+    try {
+      const [dash, apps, contactRes, faqRes] = await Promise.all([
+        api.get("/admin/dashboard"),
+        api.get("/admin/applications", { params: filters }),
+        api.get("/admin/contacts"),
+        api.get("/admin/faqs"),
+      ]);
+
+      setStats(dash.data.stats);
+      setApplications(apps.data.applications);
+      setContacts(contactRes.data.contacts);
+      setFaqs(faqRes.data.faqs);
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to load admin dashboard.");
+    }
   };
 
   useEffect(() => {
@@ -35,45 +42,87 @@ export default function AdminDashboard() {
       api.get("/admin/applications"),
       api.get("/admin/contacts"),
       api.get("/admin/faqs"),
-    ]).then(([dash, apps, contactRes, faqRes]) => {
-      if (cancelled) return;
-      setStats(dash.data.stats);
-      setApplications(apps.data.applications);
-      setContacts(contactRes.data.contacts);
-      setFaqs(faqRes.data.faqs);
-    });
+    ])
+      .then(([dash, apps, contactRes, faqRes]) => {
+        if (cancelled) return;
+        setStats(dash.data.stats);
+        setApplications(apps.data.applications);
+        setContacts(contactRes.data.contacts);
+        setFaqs(faqRes.data.faqs);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.response?.data?.message || "Unable to load admin dashboard.");
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
   const updateStatus = async (id, nextStatus) => {
-    await api.patch(`/admin/applications/${id}/status`, { status: nextStatus });
-    await load();
+    setError("");
+    setMessage("");
+    try {
+      await api.patch(`/admin/applications/${id}/status`, { status: nextStatus });
+      setMessage("Application status updated.");
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to update status.");
+    }
   };
 
   const verifyDoc = async (id, verification) => {
-    await api.patch(`/admin/documents/${id}/verify`, { verification });
-    await load();
+    setError("");
+    setMessage("");
+    try {
+      await api.patch(`/admin/documents/${id}/verify`, { verification });
+      setMessage("Document verification updated.");
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to verify document.");
+    }
   };
 
   const publishResults = async () => {
-    if (!selected.length) return;
-    const sessionYear = applications.find((app) => app.id === selected[0])?.sessionYear || "2026-27";
-    await api.post("/admin/results/publish", { sessionYear, applicationIds: selected.slice(0, 11) });
-    setSelected([]);
-    await load();
+    setError("");
+    setMessage("");
+    if (!selected.length) {
+      setError("Select at least one application before publishing results.");
+      return;
+    }
+    try {
+      const sessionYear = applications.find((app) => app.id === selected[0])?.sessionYear || "2026-27";
+      await api.post("/admin/results/publish", { sessionYear, applicationIds: selected.slice(0, 11) });
+      setSelected([]);
+      setMessage("Selected results published.");
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to publish results.");
+    }
   };
 
   const generateCertificate = async (applicationId) => {
-    await api.post(`/admin/certificates/${applicationId}`, { type: "SCHOLARSHIP_CERTIFICATE" });
-    await load();
+    setError("");
+    setMessage("");
+    try {
+      await api.post(`/admin/certificates/${applicationId}`, { type: "SCHOLARSHIP_CERTIFICATE" });
+      setMessage("Certificate generated.");
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to generate certificate.");
+    }
   };
 
   const createFaq = async (values) => {
-    await api.post("/admin/faqs", { ...values, sortOrder: Number(values.sortOrder || 0), isActive: true });
-    reset();
-    await load();
+    setError("");
+    setMessage("");
+    try {
+      await api.post("/admin/faqs", { ...values, sortOrder: Number(values.sortOrder || 0), isActive: true });
+      reset();
+      setMessage("FAQ added.");
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to add FAQ.");
+    }
   };
 
   return (
@@ -82,6 +131,8 @@ export default function AdminDashboard() {
         <div className="mb-8">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#d98c0d]">Admin Panel</p>
           <h1 className="mt-2 text-3xl font-black text-[#1a1a2e]">Scholarship Management Dashboard</h1>
+          {message && <div className="mt-4 rounded-md bg-green-50 p-3 text-sm font-bold text-green-700">{message}</div>}
+          {error && <div className="mt-4 rounded-md bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div>}
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -103,7 +154,7 @@ export default function AdminDashboard() {
                 <option value="">All Status</option>
                 {statuses.map((item) => <option key={item}>{item}</option>)}
               </select>
-              <button onClick={() => load()} className="rounded-md bg-[#1a1a2e] px-4 py-2 text-sm font-black text-white">Apply Filter</button>
+              <button onClick={() => { setError(""); void load(); }} className="rounded-md bg-[#1a1a2e] px-4 py-2 text-sm font-black text-white">Apply Filter</button>
               <button onClick={publishResults} className="rounded-md bg-[#f5a623] px-4 py-2 text-sm font-black text-[#1a1a2e]">Publish Selected</button>
             </div>
           </div>

@@ -14,24 +14,41 @@ const statusStyle = {
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    api.get("/student/dashboard").then((res) => setData(res.data));
+    let cancelled = false;
+    api.get("/student/dashboard")
+      .then((res) => {
+        if (!cancelled) setData(res.data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.response?.data?.message || "Unable to load dashboard.");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  if (error && !data) return <div className="px-4 py-16 text-center font-bold text-red-600">{error}</div>;
   if (!data) return <div className="px-4 py-16 text-center font-bold">Loading dashboard...</div>;
   const { user, profile, application, notifications } = data;
 
   const downloadPdf = async (kind, label) => {
-    const response = await api.get(`/student/documents/${kind}/pdf`, { responseType: "blob" });
-    const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${label.toLowerCase().replaceAll(" ", "-")}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    setError("");
+    try {
+      const response = await api.get(`/student/documents/${kind}/pdf`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${label.toLowerCase().replaceAll(" ", "-")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.message || `Unable to download ${label}.`);
+    }
   };
 
   const docs = [
@@ -76,6 +93,7 @@ export default function StudentDashboard() {
 
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <h3 className="text-xl font-black text-[#1a1a2e]">Downloads</h3>
+              {error && <div className="mt-4 rounded-md bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div>}
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {docs.map(([label, kind]) => (
                   <button key={kind} type="button" onClick={() => downloadPdf(kind, label)} className="flex items-center justify-between rounded-md border border-slate-200 p-4 text-left text-sm font-bold text-slate-700 hover:border-[#f5a623]">

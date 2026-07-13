@@ -6,12 +6,14 @@ import { useAuth } from "../context/auth";
 
 export default function AuthPage({ mode }) {
   const [searchParams] = useSearchParams();
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm({
     defaultValues: { email: searchParams.get("email") || "" },
   });
   const { login, register: createAccount, verifyEmail } = useAuth();
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [forgotStep, setForgotStep] = useState("request");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const title = {
@@ -24,14 +26,20 @@ export default function AuthPage({ mode }) {
   const submit = async (values) => {
     setError("");
     setMessage("");
+    setIsSubmitting(true);
     try {
       if (mode === "login") {
         const user = await login(values);
+        if (user.role === "STUDENT" && !user.isEmailVerified) {
+          setMessage("Please verify your email OTP before opening the student dashboard.");
+          navigate(`/verify-email?email=${encodeURIComponent(user.email)}`);
+          return;
+        }
         navigate(user.role === "STUDENT" ? "/dashboard" : "/admin");
       }
       if (mode === "register") {
         await createAccount(values);
-        setMessage("Account created. Check console/mail for OTP, then verify email.");
+        setMessage("Account created. Check your email for the OTP, then verify your account.");
         navigate(`/verify-email?email=${encodeURIComponent(values.email)}`);
       }
       if (mode === "verify") {
@@ -39,16 +47,50 @@ export default function AuthPage({ mode }) {
         navigate(user.role === "STUDENT" ? "/dashboard" : "/admin");
       }
       if (mode === "forgot") {
-        if (values.otp && values.password) {
-          await api.post("/auth/reset-password", values);
-          setMessage("Password reset successful. You can login now.");
-        } else {
+        if (forgotStep === "request") {
           await api.post("/auth/forgot-password", { email: values.email });
+          setForgotStep("reset");
           setMessage("If the email exists, a reset OTP has been sent.");
+        } else {
+          await api.post("/auth/reset-password", {
+            email: values.email,
+            otp: values.otp,
+            password: values.password,
+          });
+          setMessage("Password reset successful. You can login now.");
+          setForgotStep("request");
         }
       }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const buttonLabel = {
+    login: "Login",
+    register: "Register",
+    verify: "Verify Email",
+    forgot: forgotStep === "request" ? "Send Reset OTP" : "Reset Password",
+  }[mode];
+
+  const resendVerification = async () => {
+    setError("");
+    setMessage("");
+    const email = getValues("email");
+    if (!email) {
+      setError("Email is required to resend OTP.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await api.post("/auth/resend-verification", { email });
+      setMessage("If this account is not verified, a new OTP has been sent.");
+    } catch (err) {
+      setError(err.response?.data?.message || "Unable to resend OTP");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -59,7 +101,9 @@ export default function AuthPage({ mode }) {
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#f5a623]">Secure Portal</p>
           <h1 className="mt-4 text-4xl font-black leading-tight">{title}</h1>
           <p className="mt-5 text-sm leading-7 text-slate-300">
-            Email OTP verification is mandatory before a student can submit the scholarship application.
+            {mode === "forgot"
+              ? "Enter your registered email first. After receiving the OTP, set a new password."
+              : "Email OTP verification is mandatory before a student can submit the scholarship application."}
           </p>
         </div>
         <form onSubmit={handleSubmit(submit)} className="grid gap-5 p-8">
@@ -70,17 +114,46 @@ export default function AuthPage({ mode }) {
             </>
           )}
           <Field label="Email" error={errors.email} input={<input type="email" {...register("email", { required: true })} />} />
-          {mode !== "verify" && (
-            <Field label={mode === "forgot" ? "New Password (only for reset)" : "Password"} error={errors.password} input={<input type="password" {...register("password", { required: mode !== "forgot", minLength: 8 })} />} />
+          {mode !== "verify" && mode !== "forgot" && (
+            <Field label="Password" error={errors.password} input={<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} {...register("password", { required: true, minLength: 8 })} />} />
           )}
-          {(mode === "verify" || mode === "forgot") && (
-            <Field label="OTP" error={errors.otp} input={<input {...register("otp", { minLength: 6, maxLength: 6 })} />} />
+          {mode === "forgot" && forgotStep === "reset" && (
+            <>
+              <Field label="Reset OTP" error={errors.otp} input={<input inputMode="numeric" {...register("otp", { required: true, minLength: 6, maxLength: 6 })} />} />
+              <Field label="New Password" error={errors.password} input={<input type="password" autoComplete="new-password" {...register("password", { required: true, minLength: 8 })} />} />
+            </>
+          )}
+          {mode === "verify" && (
+            <Field label="OTP" error={errors.otp} input={<input inputMode="numeric" {...register("otp", { required: true, minLength: 6, maxLength: 6 })} />} />
           )}
           {message && <div className="rounded-md bg-green-50 p-3 text-sm font-bold text-green-700">{message}</div>}
           {error && <div className="rounded-md bg-red-50 p-3 text-sm font-bold text-red-700">{error}</div>}
-          <button className="rounded-md bg-[#f5a623] px-5 py-3 font-black text-[#1a1a2e]">
-            {mode === "login" ? "Login" : mode === "register" ? "Register" : mode === "verify" ? "Verify Email" : "Continue"}
+          <button disabled={isSubmitting} className="rounded-md bg-[#f5a623] px-5 py-3 font-black text-[#1a1a2e] disabled:cursor-not-allowed disabled:opacity-60">
+            {isSubmitting ? "Please wait..." : buttonLabel}
           </button>
+          {mode === "verify" && (
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={resendVerification}
+              className="rounded-md border border-slate-200 px-5 py-3 text-sm font-black text-[#1a1a2e] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Resend OTP
+            </button>
+          )}
+          {mode === "forgot" && forgotStep === "reset" && (
+            <button
+              type="button"
+              className="rounded-md border border-slate-200 px-5 py-3 text-sm font-black text-[#1a1a2e]"
+              onClick={() => {
+                setForgotStep("request");
+                setError("");
+                setMessage("");
+              }}
+            >
+              Use different email
+            </button>
+          )}
           <div className="flex flex-wrap gap-4 text-sm font-bold text-slate-600">
             <Link to="/login">Login</Link>
             <Link to="/register">Register</Link>

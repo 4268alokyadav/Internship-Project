@@ -1,4 +1,6 @@
 import { Router } from "express";
+import fs from "node:fs";
+import path from "node:path";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
@@ -35,6 +37,16 @@ const ensureApplication = async (userId) =>
     create: { userId, sessionYear: currentSessionYear() },
     include: { documents: true, testResults: { include: { test: true } }, results: true, certificates: true },
   });
+
+const getLocalUploadFile = (fileUrl) => {
+  if (!fileUrl?.startsWith(env.PUBLIC_UPLOAD_URL)) return null;
+  const uploadRoot = path.resolve(env.UPLOAD_DIR);
+  const relativeUrl = fileUrl.slice(env.PUBLIC_UPLOAD_URL.length).replace(/^[/\\]+/, "");
+  const filePath = path.resolve(uploadRoot, decodeURIComponent(relativeUrl));
+  const relativePath = path.relative(uploadRoot, filePath);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath) || !fs.existsSync(filePath)) return null;
+  return filePath;
+};
 
 router.get("/dashboard", asyncHandler(async (req, res) => {
   const application = await ensureApplication(req.user.id);
@@ -146,8 +158,13 @@ router.get("/documents/:kind/pdf", asyncHandler(async (req, res) => {
   if (req.params.kind === "certificate") {
     const certificate = application.certificates.at(-1);
     if (certificate?.fileUrl) {
-      res.redirect(certificate.fileUrl);
-      return;
+      const certificatePath = getLocalUploadFile(certificate.fileUrl);
+      if (certificatePath) {
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="${certificate.certificateNo}.pdf"`);
+        res.sendFile(certificatePath);
+        return;
+      }
     }
   }
   streamStudentDocumentPdf(res, req.params.kind, application);

@@ -37,17 +37,21 @@ export default function ApplyPage() {
 
   useEffect(() => {
     let cancelled = false;
-    api.get("/student/application").then(({ data }) => {
-      if (cancelled) return;
-      setApplication(data.application);
-      reset({
-        profile: {
-          ...data.profile,
-          currentClass: "X",
-          dateOfBirth: data.profile?.dateOfBirth?.slice(0, 10),
-        },
+    api.get("/student/application")
+      .then(({ data }) => {
+        if (cancelled) return;
+        setApplication(data.application);
+        reset({
+          profile: {
+            ...data.profile,
+            currentClass: "X",
+            dateOfBirth: data.profile?.dateOfBirth?.slice(0, 10),
+          },
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.response?.data?.message || "Unable to load application.");
       });
-    });
     return () => {
       cancelled = true;
     };
@@ -116,6 +120,7 @@ export default function ApplyPage() {
     }
   };
 
+  if (!application && error) return <div className="px-4 py-16 text-center font-bold text-red-600">{error}</div>;
   if (!application) return <div className="px-4 py-16 text-center font-bold">Loading application...</div>;
   const locked = Boolean(application.submittedAt);
 

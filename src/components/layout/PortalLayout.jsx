@@ -2,6 +2,7 @@ import { Menu, ShieldCheck, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/auth";
+import logo from "../../assets/logo.jpeg";
 
 const nav = [
   { label: "About", to: "/#about" },
@@ -30,8 +31,8 @@ export default function PortalLayout() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#1a1a2e] text-white shadow-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-md bg-[#f5a623] font-black text-[#1a1a2e]">
-              U
+            <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-md border border-[#f5a623]/35 bg-white p-1 shadow-sm">
+              <img src={logo} alt="Utkarsh Scholarship logo" className="h-full w-full object-contain" />
             </span>
             <span>
               <span className="block text-lg font-black leading-5 text-[#f5a623]">Utkarsh</span>
